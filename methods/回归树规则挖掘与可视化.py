@@ -114,6 +114,8 @@ for i in dstc_lst:
 
 fn =  base.merge(gn,on='uid').merge(gc,on='uid')  
 fn = pd.merge(fn,gc,on= 'uid')
+# 决策树模型对缺失值敏感，稍微填充一下
+fn = fn.fillna(0)
 
 x = fn.drop(['uid','oil_actv_dt','create_dt','bad_ind','class_new'],axis = 1)
 y = fn.bad_ind.copy()
