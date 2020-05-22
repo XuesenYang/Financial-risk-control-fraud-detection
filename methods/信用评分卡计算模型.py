@@ -2,7 +2,7 @@
 评分卡模型：参考蚂蚁信用积分，这个积分一般为正值，分数越高，信用越好
 业内常用比例放缩的评分映射方法：分数 = 基准分 + 映射系数 * log2（逾期概率/非逾期概率）
 """
-import pandas as pd  
+import pandas as pd
 from sklearn.metrics import roc_auc_score,roc_curve,auc  
 from sklearn import metrics  
 from sklearn.linear_model import LogisticRegression  
@@ -19,10 +19,11 @@ y = train['bad_ind']
   
 val_x =  val[feature_lst]  
 val_y = val['bad_ind']  
-  
+
+# 建立逻辑回归预测模型
 lr_model = LogisticRegression(C=0.1,class_weight='balanced')  
 lr_model.fit(x,y) 
- 
+
 y_pred = lr_model.predict_proba(x)[:,1]  
 fpr_lr_train,tpr_lr_train,_ = roc_curve(y,y_pred)  
 train_ks = abs(fpr_lr_train - tpr_lr_train).max()  
@@ -33,6 +34,7 @@ fpr_lr,tpr_lr,_ = roc_curve(val_y,y_pred)
 val_ks = abs(fpr_lr - tpr_lr).max()  
 print('val_ks : ',val_ks)  
 
+# 画ROC图
 from matplotlib import pyplot as plt  
 plt.plot(fpr_lr_train,tpr_lr_train,label = 'train LR')  
 plt.plot(fpr_lr,tpr_lr,label = 'evl LR')  
@@ -49,7 +51,8 @@ Y_predict = [s[1] for s in model.predict_proba(val_x)]
 Y = val_y  
 nrows = Y.shape[0]  
 lis = [(Y_predict[i], Y[i]) for i in range(nrows)]  
-ks_lis = sorted(lis, key=lambda x: x[0], reverse=True)  
+ks_lis = sorted(lis, key=lambda x: x[0], reverse=True)
+print(ks_lis)
 bin_num = int(nrows/bins+1)  
 bad = sum([1 for (p, y) in ks_lis if y > 0.5])  
 good = sum([1 for (p, y) in ks_lis if y <= 0.5])  
@@ -88,6 +91,9 @@ for j in range(bins):
 val_repot = pd.DataFrame(dct_report)  
 print(val_repot)  
 
+
+# 通过画图观察模型表现，正常来说ks走势先升高再降低，分组负样本占比一直降低
+# 这里分箱是将预估概率降序，平均分为n箱，这里n=20，假设将逾期当作负样本（1），那么每箱负样本采样量一直减少
 from pyecharts.charts import *  
 from pyecharts import options as opts  
 from pylab import *  
@@ -137,6 +143,8 @@ print('变量名单：',feature_lst)
 print('系数：',lr_model.coef_)  
 print('截距：',lr_model.intercept_)  
 
+
+# 记录逻辑回归训练出来的变量权重，可以代进去求得新用户的信用评分值
 import math
 #算分数onekey   
 def score(person_info,finance_info,credit_info,act_info):  
@@ -169,6 +177,8 @@ def level(score):
 val['level'] = val.score.map(lambda x : level(x) )  
 print(val.level.groupby(val.level).count()/len(val))  
 
+
+# 对应XGBoost训练模型
 import XGBoost as xgb
 data = pd.read_csv('Acard.txt')
 df_train = data[data.obs_mth != '2018-11-30'].reset_index().copy()
