@@ -1,3 +1,4 @@
+# JDA的核心理念是将数据映射到一个分布，同时减小源域和目标域的边缘分布差异和条件分布差异
 import numpy as np
 import scipy.sparse.linalg as SSL
 import scipy.linalg as SL
